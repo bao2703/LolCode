@@ -1,5 +1,4 @@
 import scala.util.parsing.combinator.syntactical.StdTokenParsers
-import java.time.format.Parsed
 
 class LolParser extends StdTokenParsers {
   type Tokens = LolTokens
@@ -17,15 +16,15 @@ class LolParser extends StdTokenParsers {
     case a => new ValuePT(a)
   }
 
-  def program: Parser[ProgramPT] = (opt(eol) ~> "HAI" ~> opt(numericLit) <~ eol) ~> rep(statement) <~ "KTHXBYE" <~ opt(eol) ^^ {
+  def program: Parser[ProgramPT] = ((opt(eol) ~ "HAI") ~> opt(numericLit) <~ eol) ~> rep(statement) <~ ("KTHXBYE" ~ opt(eol)) ^^ {
     case a => new ProgramPT(a)
   }
   def statement: Parser[StatementPT] = (vardec | assignment | input | output | expression
-    | break | ifElse | switch | loop | function | functionReturnPT) <~ eol ^^ {
+    | ifElse | switch | loop | function) <~ eol ^^ {
       case a => a
     }
 
-  def vardec: Parser[VariableDeclarationPT] = ("I HAS A" ~> ident) ~ opt("ITZ" ~> (expression)) ^^ {
+  def vardec: Parser[VariableDeclarationPT] = ("I HAS A" ~> ident) ~ opt("ITZ" ~> expression) ^^ {
     case a ~ b => new VariableDeclarationPT(new IdentPT(a), b)
   }
 
@@ -58,20 +57,20 @@ class LolParser extends StdTokenParsers {
     case a ~ b => new MultiArityOperatorPT(a, b)
   }
 
-  def break: Parser[BreakPT] = "GTFO" ^^ {
+  def break: Parser[BreakPT] = "GTFO" ~> eol ^^ {
     case a => new BreakPT()
   }
 
-  def elseIF: Parser[ElseIFPT] = (("MEBBE" ~> expression <~ eol) ~ (rep(statement))) ^^ {
+  def elseIF: Parser[ElseIFPT] = ("MEBBE" ~> expression <~ eol) ~ rep(statement) ^^ {
     case a ~ b => new ElseIFPT(a, b)
   }
 
-  def ifElse: Parser[IfElsePT] = ("O RLY?" ~ eol ~ "YA RLY" ~ eol) ~> rep(statement) ~ opt(rep(elseIF)) ~
+  def ifElse: Parser[IfElsePT] = "O RLY?" ~> eol ~> "YA RLY" ~> eol ~> rep(statement) ~ opt(rep(elseIF)) ~
     opt(("NO WAI" ~ eol) ~> rep(statement)) <~ "OIC" ^^ {
       case a ~ b ~ c => new IfElsePT(a, b, c)
     }
 
-  def switch: Parser[SwitchPT] = ("WTF?" ~ eol) ~> rep(Case) <~ "OIC" ^^ {
+  def switch: Parser[SwitchPT] = "WTF?" ~> eol ~> rep(Case) <~ "OIC" ^^ {
     case a => new SwitchPT(a)
   }
 
@@ -79,32 +78,32 @@ class LolParser extends StdTokenParsers {
     case a => a
   }
 
-  def valueCase: Parser[ValueCasePT] = "OMG" ~> rep(opt("OMG") ~> value <~ eol) ~ rep(statement) <~ opt(break) ^^ {
+  def valueCase: Parser[ValueCasePT] = "OMG" ~> rep(opt("OMG") ~> value <~ eol) ~ rep(break|statement) ^^ {
     case a ~ b => new ValueCasePT(a, b)
   }
 
-  def defaultCase: Parser[DefaultCasePT] = ("OMGWTF" ~ eol) ~> rep(statement) ^^ {
+  def defaultCase: Parser[DefaultCasePT] = "OMGWTF" ~> eol ~> rep(statement) ^^ {
     case a => new DefaultCasePT(a)
   }
 
-  def loopCondition: Parser[LoopConditionPT] = (("UPPIN" | "NERFIN" | id) <~ "YR") ~ id ~ opt(("TIL" | "WILE") ~ expression) ^^ {
+  def loopCondition: Parser[LoopConditionPT] = (("UPPIN" | "NERFIN" | expression) <~ "YR") ~ id ~ opt(("WILE" | "TIL") ~ expression) ^^ {
     case a ~ b ~ None => new LoopConditionPT(a.toString(), b, None)
     case a ~ b ~ Some(c ~ d) => new LoopConditionPT(a.toString(), b, Some(c -> d))
   }
 
-  def loop: Parser[LoopPT] = ("IM IN YR" ~> id) ~ (opt(loopCondition) <~ eol) ~ rep(statement) <~ opt(break) <~ ("IM OUTTA YR" ~ id) ^^ {
+  def loop: Parser[LoopPT] = "IM IN YR" ~> id ~ (opt(loopCondition) <~ eol) ~ rep(break|statement) <~ ("IM OUTTA YR" ~> id) ^^ {
     case a ~ b ~ c => new LoopPT(a, b, c)
   }
 
-  def function: Parser[FunctionPT] = ("HOW IZ I" ~> id ~ rep("YR" ~> id) <~ eol) ~ rep(statement) <~ "IF U SAY SO" ^^ {
+  def function: Parser[FunctionPT] = ("HOW IZ I" ~> id ~ rep(opt("AN") ~> opt("YR") ~> id) <~ eol) ~ rep(functionReturn | statement) <~ "IF U SAY SO" ^^ {
     case a ~ b ~ c => new FunctionPT(a, b, c)
   }
 
-  def functionReturnPT: Parser[FunctionReturnPT] = "FOUND YR" ~> opt(expression) ^^ {
+  def functionReturn: Parser[FunctionReturnPT] = ("FOUND YR" | "GTFO") ~> opt(expression) <~ eol ^^ {
     case a => new FunctionReturnPT(a)
   }
 
-  def functionCall: Parser[FunctionCallPT] = "I IZ" ~> id ~ rep("YR" ~> expression) <~ "MKAY" ^^ {
+  def functionCall: Parser[FunctionCallPT] = "I IZ" ~> id ~ rep(opt("AN") ~> opt("YR") ~> expression) <~ "MKAY" ^^ {
     case a ~ b => new FunctionCallPT(a, b)
   }
 }

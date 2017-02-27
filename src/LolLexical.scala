@@ -31,7 +31,7 @@ class LolLexical extends StdLexical with LolTokens {
   }
 
   reserved ++= List("SMOOSH", "MKAY", "MAEK", "HAI", "VISIBLE", "GIMMEH", "R", "KTHXBYE", "AN", "WIN", "FAIL", "TYPE",
-    "YARN", "NUMBR", "NUMBAR", "BUKKIT", "NOOB", "TROOF", "ITZ", "MKAY", "YR")
+    "YARN", "NUMBR", "NUMBAR", "BUKKIT", "NOOB", "TROOF", "ITZ", "MKAY", "YR", "OMGWTF", "GTFO", "OMG")
 
   override def token: Parser[Token] =
     {
@@ -41,11 +41,10 @@ class LolLexical extends StdLexical with LolTokens {
         regex("BOTH SAEM|DIFFRINT".r) ^^ { Keyword(_) } |
         regex("IS NOW A|R MAEK".r) ^^ { Keyword(_) } |
         regex("O RLY\\?|YA RLY|NO WAI|OIC|MEBBE".r) ^^ { Keyword(_) } |
-        regex("WTF\\?|OMGWTF|GTFO|OMG".r) ^^ { Keyword(_) } |
         regex("IM IN YR|IM OUTTA YR|TIL|WILE|UPPIN|NERFIN".r) ^^ { Keyword(_) } |
         regex("BTW|OBTW|TLDR".r) ^^ { Keyword(_) } |
         regex("HOW IZ I|FOUND YR|IF U SAY SO|I IZ".r) ^^ { Keyword(_) } |
-        regex("I HAS A".r) ^^ { Keyword(_) } |
+        regex("I HAS A|WTF\\?".r) ^^ { Keyword(_) } |
         regex("[a-zA-Z][a-zA-Z0-9]*".r) ^^ { processIdent(_) } |
         regex("\"[^\"]*\"".r) ^^ { StringLit(_) } |
         regex("[+-]?([0-9]*[.])?[0-9]+".r) ^^ { NumericLit(_) }
